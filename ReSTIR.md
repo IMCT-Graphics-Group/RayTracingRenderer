@@ -53,5 +53,3 @@ ${\left<L\right>}_{ris}^{N,M}=\frac{1}{N}\underset{i=1}{\overset{N}{\sum}}\left(
 **加权蓄水池采样**
 
 ### 时空重用的流式RIS
-
-
