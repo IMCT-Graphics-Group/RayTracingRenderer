@@ -99,3 +99,29 @@ $\frac{\textrm{w}(x_i)}{\sum_{j=1}^m\textrm{w}(x_j)}\left(1-\frac{\textrm{w}(x_{
 在进行时空复用之前，我们先计算一下所选样本$y$的可见性，如果$y$被遮挡，则抛弃该蓄水池，这也意味着被遮挡的样本不再向邻域传递。
 
 ### 无偏方法
+
+我们先从对RIS开始，重新整理RIS的表述形式，可以得到：
+
+$\left<L\right>_{ris}^{1,M}=f(y)\cdot\left(\frac{1}{\hat{p}(y)}\frac{1}{M}\underset{j=1}{\overset{M}{\sum}}\textrm{w}(x_j)\right)=f(y)W(\mathbf{x},z)$
+
+则，$W$是样本$y\equiv x_z$的权值。
+
+回顾蒙特卡洛估计的基本形式$f(y)/p(y)$，使用$W(\mathbf{x},z)$作为权值就意味着我们期望$W(\mathbf{x},z)=1/p(y)$。但$W(\mathbf{x},z)$是一个随机变量，我们无法确定输出的样本$y$来自于怎样的$\left\{\mathbf{x},z\right\}$。为了最终得到无偏的RIS，我们需要确保$W(\mathbf{x},z)=1/p(y)$。
+
+回到之前的使用场景，我们知道抽取的样本实际上可能来自不同的PDF $p_i(x_i)$，那么，它们的联合PDF为：
+
+$p(\mathbf{x})=\underset{i=1}{\overset{M}{\prod}}p_i(x_i)$
+
+接下来，我们根据联合PDF离散地选取某个样本序号$z\in\left\{1,...,M\right\}$：
+
+$p(z|\mathbf{x})=\frac{\textrm{w}_z(x_z)}{\sum_{i=1}^M\textrm{w}_i(x_i)}$
+
+其中，$\textrm{w}_i(x)=\frac{\hat{p}(x)}{p_i(x)}$
+
+于是有：
+
+$p(\mathbf{x},z)=p(\mathbf{x})p(z|\mathbf{x})=\left[\underset{i=1}{\overset{M}{\prod}}p_i(x_i)\right]\frac{\textrm{w}_z(x_z)}{\sum_{i=1}^M\textrm{w}_i(x_i)}$
+
+但样本集$\mathbf{x}$中，哪一个是$y$，我们并不能确定，既有可能是$x_1=y,z=1$，也可能是$x_2=y,z=2$。不过我们总能确定这样一个关系：
+
+$Z(y)=\left\{i|1\leq i\leq M\wedge p_i(y)>0\right\}$
