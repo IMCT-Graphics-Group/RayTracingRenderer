@@ -122,6 +122,42 @@ $p(z|\mathbf{x})=\frac{\textrm{w}_z(x_z)}{\sum_{i=1}^M\textrm{w}_i(x_i)}$
 
 $p(\mathbf{x},z)=p(\mathbf{x})p(z|\mathbf{x})=\left[\underset{i=1}{\overset{M}{\prod}}p_i(x_i)\right]\frac{\textrm{w}_z(x_z)}{\sum_{i=1}^M\textrm{w}_i(x_i)}$
 
-但样本集$\mathbf{x}$中，哪一个是$y$，我们并不能确定，既有可能是$x_1=y,z=1$，也可能是$x_2=y,z=2$。不过我们总能确定这样一个关系：
+但样本集$\mathbf{x}$中，哪一个是$y$，我们并不能确定，既有可能是$x_1=y,z=1$，也可能是$x_2=y,z=2$。不过我们知道一些前提条件，从而确定一个集合范围：
 
 $Z(y)=\left\{i|1\leq i\leq M\wedge p_i(y)>0\right\}$
+
+为了得到关于$y$的PDF，我们可以直接计算边缘概率密度：
+
+$p(y)=\underset{i\in Z(y)}{\sum}\underset{M-1\space times}{\underbrace{\int\cdots\int}}p(\mathbf{x}^{i\to y},i)\underset{M-1\space times}{\underbrace{dx_1\cdots dx_M}}$
+
+其中，$\mathbf{x}^{i\to y}=\left\{x_1,...,x_{i-1},y,x_{i+1},...,x_M\right\}$是将第$i$个候选样本固定为$y$的简记形式。边缘概率密度的计算只对剩下的$M-1$个候选样本（对应的概率密度）积分。
+
+于是，我们可以尝试验证RIS权值$W(\mathbf{x},z)$的期望。
+
+我们先通过一个条件期望来表示$x_z=y$时权值的期望：
+
+$\underset{x_z=y}{\mathbb{E}}[W(\mathbf{x},z)]=\underset{i\in Z(y)}{\sum}\frac{\int\cdots\int W(\mathbf{x}^{i\to y},i)p(\mathbf{x}^{i\to y},i)dx_1\cdots dx_M}{p(y)}$
+
+上式经过化简可以得到：
+
+$\underset{x_z=y}{\mathbb{E}}[W(\mathbf{x},z)]=\frac{1}{p(y)}\frac{|Z(y)|}{M}$
+
+从而确定，当各个候选样本的PDF都在目标函数非零处不为零，且$|Z(y)|=M$时，RIS估计无偏。换句话说，如果存在某个候选样本的PDF在被积函数的某一段上为零，则$\frac{|Z(y)|}{M}<1$，进而导致RIS估计低于实际积分结果，在渲染结果上体现为“变暗”。
+
+消除偏差的方法是对权值和使用特别指定的修正权重：
+
+$W(\mathbf{x},z)=\frac{1}{\hat{p}(x_z)}\left[m(x_z)\underset{i=1}{\overset{M}{\sum}}\textrm{w}_i(x_i)\right]$
+
+回到权值的期望计算，我们重新表述为：
+
+$\underset{x_z=y}{\mathbb{E}}[W(\mathbf{x},z)]=\frac{1}{p(y)}\underset{i\in Z(y)}{\sum}m(x_i)$
+
+那么只需要确保$\sum_{i\in Z(y)}m(x_i)=1$，即可保证RIS估计无偏。
+
+有很多方法选取$m(x)$，最简单的是直接取$m(x_z)=1/|Z(x_z)|$，也就是取$x_z$处PDF不为零的样本数量的倒数。该方案虽然得到了无偏的结果，但是对PDF倒数的估计可能会产生问题。如果一个候选样本的PDF很接近零，那么据此得到的PDF倒数的RIS估计会有很大的噪声。
+
+第二种选取的方法是结合多重重要性采样，例如：
+
+$m(x_z)=\frac{p_z(x_z)}{\sum_{i=1}^{M}p_i(x_z)}$
+
+上式采用了平衡启发式方法。
