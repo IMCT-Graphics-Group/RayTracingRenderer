@@ -18,10 +18,32 @@ Windows中创建窗口需要调用特定的系统API，Rust中一般使用`winit
 
 使用Ash创建Vulkan实例遵循以下流程：
 
-- 通过`ash::Entry::linked()`加载Vulkan SDK
+- 通过`ash::Entry::linked()`加载Vulkan SDK（需要开启相关feature）
 
 - 配置`app_info`和`create_info`
 
 - 通过`entry.create_instance()`创建Vulkan实例
+
+### 3. Validation layers
+
+为了减少驱动负担，Vulkan中几乎没有错误检查。但Vulkan提供了一种优雅的机制来辅助开发，那就是`validation layers`。validation layers中通常包含的操作有：
+
+- 根据规范检查参数值以检测是否存在误用
+
+- 跟踪对象的创建和销毁以避免资源泄露
+
+- 跟踪线程的发起端以保证线程安全
+
+- 将每个调用及其参数记录到标准输出
+
+- 跟踪Vulkan的调用以供分析和复现
+
+启用validation layers一般分为以下几个步骤：
+
+- 通过`entry.enumerate_instance_layer_properties()`获取所有layer
+
+- 检查所有获取到的layer中是否存在所需的validation layers
+
+- 将可用的validation layers添加到`create_info`中
 
 
