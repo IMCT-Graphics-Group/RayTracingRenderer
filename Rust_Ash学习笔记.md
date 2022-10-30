@@ -46,4 +46,16 @@ Windows中创建窗口需要调用特定的系统API，Rust中一般使用`winit
 
 - 将可用的validation layers添加到`create_info`中
 
+虽然validation layers会将debug信息打印到标准输出中，但我们也完全可以通过一个回调来处理debug信息。自定义debug回调需要遵循以下步骤：
+
+- 获取扩展信息
+
+- 将扩展信息添加到`create_info`中
+
+- 从系统引入并创建自定义的回调函数
+
+- 将自定义的回调函数添加到`create_info`中
+
+### 4. 物理设备和队列族
+
 
