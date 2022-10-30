@@ -58,4 +58,38 @@ Windows中创建窗口需要调用特定的系统API，Rust中一般使用`winit
 
 ### 4. 物理设备和队列族
 
+选取物理设备和队列族（queue family）一般遵循以下步骤：
+
+- 获取所有可用的物理设备列表
+
+- 检查各物理设备的适配性
+
+- 检查物理设备的队列族的适配性
+
+- 选取满足需要的设备
+
+### 5. 逻辑设备和队列
+
+选好物理设备后，需要为它设置一个（或多个）逻辑设备。
+
+设置逻辑设备遵循如下步骤：
+
+- 配置`DeviceQueueCreateInfo`
+
+- 配置`DeviceCreateInfo`
+
+- 通过实例的`create_device()`方法创建逻辑设备和队列
+
+### 6. Window surface
+
+为了建立Vulkan和窗口之间的连接,需要使用WSI扩展。Window surface应当在实例创建之后立即创建，且遵循以下步骤：
+
+- 配置`Win32SurfaceCreateInfo`
+
+- 创建`Win32Surface`实例
+
+- 通过`Win32Surface`实例的`create_win32_surface`创建SurfaceKHR
+
+- 
+
 
