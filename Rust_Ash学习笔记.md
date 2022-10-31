@@ -93,3 +93,11 @@ Windows中创建窗口需要调用特定的系统API，Rust中一般使用`winit
 - 创建`ash::extensions::khr::Surface`实例（通用上层抽象）
 
 ### 7. 交换链
+
+为了展示图像序列，需要创建和使用交换链。交换链的创建遵循以下步骤：
+
+- 检查交换链的支持性
+
+- 在`DeviceCreateInfo`中启用`Swapchain`扩展
+
+- 检查交换链细节属性的支持性（容量、格式、模式）
