@@ -119,3 +119,15 @@ Windows中创建窗口需要调用特定的系统API，Rust中一般使用`winit
 - 遍历每张图片，配置`ImageViewCreateInfo`
 
 - 根据`ImageViewCreateInfo`创建`ImageView`
+
+### 9. 着色器
+
+Vulkan中的着色器必须使用一种被称为`SPIR-V`字节码格式。`SPIR-V`可用于编写图形着色器和计算着色器。一般通过`glslc.exe`（已包含于Vulkan SDK）将GLSL编译为`SPIR-V`。
+
+在渲染光线中绑定着色器一般遵循以下步骤：
+
+- 读取着色器的`spv`字节码文件
+
+- 配置`ShaderModuleCreateInfo`，创建`ShaderModule`
+
+- 配置`PipelineShaderStageCreateInfo`
