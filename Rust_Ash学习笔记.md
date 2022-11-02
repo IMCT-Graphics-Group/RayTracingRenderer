@@ -131,3 +131,33 @@ Vulkan中的着色器必须使用一种被称为`SPIR-V`字节码格式。`SPIR-
 - 配置`ShaderModuleCreateInfo`，创建`ShaderModule`
 
 - 配置`PipelineShaderStageCreateInfo`
+
+- 配置`PipelineVertexInputStateCreateInfo`
+
+- 配置`PipelineInputAssemblyStateCreateInfo`
+
+- 配置`PipelineViewportStateCreateInfo`
+
+- 配置`PipelineRasterizationStateCreateInfo`
+
+- 配置`PipelineMultisampleStateCreateInfo`
+
+- 配置`PipelineDepthStencilStateCreateInfo`
+
+- 配置`PipelineColorBlendStateCreateInfo`
+
+- 配置`PipelineLayoutCreateInfo`
+
+- 创建`PipelineLayout`
+
+### 10. 渲染Pass
+
+创建渲染Pass遵循以下步骤：
+
+- 配置`AttachmentDescription`
+
+- 配置`SubpassDescription`
+
+- 配置`RenderPassCreateInfo`
+
+- 创建`RenderPass`
