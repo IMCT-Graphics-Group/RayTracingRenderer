@@ -120,11 +120,11 @@ Windows中创建窗口需要调用特定的系统API，Rust中一般使用`winit
 
 - 根据`ImageViewCreateInfo`创建`ImageView`
 
-### 9. 着色器
+### 9. 着色器与渲染阶段
 
 Vulkan中的着色器必须使用一种被称为`SPIR-V`字节码格式。`SPIR-V`可用于编写图形着色器和计算着色器。一般通过`glslc.exe`（已包含于Vulkan SDK）将GLSL编译为`SPIR-V`。
 
-在渲染光线中绑定着色器一般遵循以下步骤：
+在渲染管线中绑定着色器和配置渲染阶段一般遵循以下步骤：
 
 - 读取着色器的`spv`字节码文件
 
@@ -161,3 +161,17 @@ Vulkan中的着色器必须使用一种被称为`SPIR-V`字节码格式。`SPIR-
 - 配置`RenderPassCreateInfo`
 
 - 创建`RenderPass`
+
+### 11. 渲染管线
+
+完成上述步骤后即可创建渲染管线。创建渲染管线遵循以下步骤：
+
+- 配置`GraphicsPipelineCreateInfo`
+
+- 创建`Pipeline`
+
+### 12. 帧缓冲
+
+为了从交换链中获取和显示图片，我们需要创建一个帧缓冲。
+
+创建帧缓冲遵循以下步骤：
