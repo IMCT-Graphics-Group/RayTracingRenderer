@@ -174,4 +174,74 @@ Vulkan中的着色器必须使用一种被称为`SPIR-V`字节码格式。`SPIR-
 
 为了从交换链中获取和显示图片，我们需要创建一个帧缓冲。
 
-创建帧缓冲遵循以下步骤：
+为每个`ImageView`创建帧缓冲遵循以下步骤：
+
+- 配置`FramebufferCreateInfo`
+
+- 创建`Framebuffer`
+
+### 13. 命令缓冲
+
+Vulkan中的命令需要通过命令缓冲对象传递。创建命令缓冲对象，首先需要创建一个命令池：
+
+- 配置`CommandPoolCreateInfo`
+
+- 创建`CommandPool`
+
+然后就可以创建命令缓冲对象了：
+
+- 配置`CommandBufferAllocateInfo`
+
+- 创建`CommandBuffer`数组
+
+对于每一个命令缓冲，遵循以下处理步骤：
+
+- 创建`CommandBufferBeginInfo`
+
+- 调用`begin_command_buffer`开始记录命令
+
+- 配置`RenderPassBeginInfo`
+
+- 调用`cmd_begin_render_pass`开启渲染pass
+
+- 调用`cmd_bind_pipeline`绑定渲染管线
+
+- 调用`cmd_draw`绘制
+
+- 调用`cmd_end_render_pass`结束渲染pass
+
+- 调用`end_command_buffer`结束记录命令
+
+### 14. 渲染与画面呈现
+
+渲染一帧图片通常包括以下阶段：
+
+- 等待上一帧图片结束
+
+- 向交换链请求一张新的图片
+
+- 记录绘制图片的命令缓冲
+
+- 提交命令缓冲
+
+- 呈现交换链中的图片
+
+处理同步问题通常使用Semaphores，但这并不会阻塞CPU端的执行；阻塞CPU端的执行需要使用Fences。等待上一帧图片结束应当使用fence，而交换链上的操作则只需要使用semaphores。
+
+创建Sempahores遵循以下步骤：
+
+- 配置`SemaphoreCreateInfo`
+
+- 创建`Semaphore`对象
+
+提交命令缓冲遵循以下步骤：
+
+- 配置`SubmitInfo`
+
+- 通过`queue_submit`提交命令缓冲
+
+展示画面遵循以下步骤：
+
+- 配置`PrensetInfoKHR`
+
+- 通过`queue_present`提交展示指令
