@@ -245,3 +245,7 @@ Vulkan中的命令需要通过命令缓冲对象传递。创建命令缓冲对�
 - 配置`PrensetInfoKHR`
 
 - 通过`queue_present`提交展示指令
+
+### 15. 重新生成交换链
+
+当window surface发生改变时（调整窗口大小），需要重新生成交换链。
