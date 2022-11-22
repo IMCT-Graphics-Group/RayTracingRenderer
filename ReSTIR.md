@@ -50,7 +50,7 @@ ${\left<L\right>}_{ris}^{1,M}=\frac{f(y)}{\hat{p}(y)}\cdot\left(\frac{1}{M}\unde
 
 多次重复RIS并平均结果，就可以得到N样本的RIS估计：
 
-${\left<L\right>}_{ris}^{N,M}=\frac{1}{N}\underset{i=1}{\overset{N}{\sum}}\left(\frac{f(y_i)}{\hat{p}(y_i)}\cdot\left(\frac{1}{M}\underset{j=1}{\overset{M}{\sum}\textrm{w}(x_{ij})}\right)\right)$
+${\left<L\right>}_{ris}^{N,M}=\frac{1}{N}\underset{i=1}{\overset{N}{\sum}}\left(\frac{f(y_i)}{\hat{p}(y_i)}\cdot\left(\frac{1}{M}\underset{j=1}{\overset{M}{\sum}}\textrm{w}(x_{ij})\right)\right)$
 
 只要$p,\hat{p}$在$f$非零处都为正值，则RIS也是无偏估计。简便起见，后续将按$N=1$使用。
 
@@ -199,3 +199,9 @@ $\hat{I}_{ris}=\frac{1}{N}\underset{i=1}{\overset{N}{\sum}}\left(\frac{f(Y_i)}{g
 **方差分析**：
 
 待续，有空再补。
+
+### ReSTIR PT (GRIS)
+
+早期的ReSTIR方法重用了大量样本，这引入了样本之间的相关性，从而无法保证RIS的收敛性。GRIS推广了ReSTIR理论，使得复用样本也可以正常收敛，该项工作进一步巩固了相关理论的基石，使得ReSTIR方法的方差界和收敛界也可以计算出来。
+
+ReSTIR不稳定的因素在于，作为其根基的RIS理论要求样本之间的贡献都是独立且均等的，重用这些样本直接打破了它们的独立性要求，也使得收敛变缓。ReSTIR、ReSTIR GI的成功应用可以从经验角度解释为，较小的相关性并不会对收敛产生很大影响，但怎样的复用会怎样影响收敛值得彻底地研究，特别是对于更复杂的场景来说，保证样本之间的独立性可能更加重要。
