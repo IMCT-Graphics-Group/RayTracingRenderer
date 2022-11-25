@@ -194,7 +194,7 @@ $w(\mathbf{X}_i,Y_i)=\frac{1}{M}\overset{M}{\underset{j=1}{\sum}}w_{ij}$
 
 最后整理上式可以得到：
 
-$\hat{I}_{ris}=\frac{1}{N}\underset{i=1}{\overset{N}{\sum}}\left(\frac{f(Y_i)}{g(Y_i)}\cdot\frac{1}{M}\underset{j=1}{\overset{M}{\sum}}\frac{g(X_{ij})}{P(X_{ij})}\right)$
+$\hat{I}_{ris}=\frac{1}{N}\underset{i=1}{\overset{N}{\sum}}\left(\frac{f(Y_i)}{g(Y_i)}\cdot\frac{1}{M}\underset{j=1}{\overset{M}{\sum}}w_{ij}\right)$
 
 **方差分析**：
 
@@ -207,8 +207,6 @@ $\hat{I}_{ris}=\frac{1}{N}\underset{i=1}{\overset{N}{\sum}}\left(\frac{f(Y_i)}{g
 ReSTIR不稳定的因素在于，作为其根基的RIS理论要求样本之间的贡献都是独立且均等的，重用这些样本直接打破了它们的独立性要求，也使得收敛变缓。ReSTIR、ReSTIR GI的成功应用可以从经验角度解释为，较小的相关性并不会对收敛产生很大影响，但怎样的复用会怎样影响收敛值得彻底地研究，特别是对于更复杂的场景来说，保证样本之间的独立性可能更加重要。
 
 GRIS理论重新阐述了之前从RIS到ReSTIR的理论：
-
-**RIS**
 
 RIS的输入是一组域为 $\Omega$，概率密度函数为 $p$ 的独立同分布的多个随机样本$(X_i)_{i=1}^{M}$。RIS的目标是从输入样本序列中随机抽样生成新的样本序列$Y$，以使得样本序列$Y$的概率密度函数$p_Y$是更适合$\Omega$上被积函数$f$的重要性采样。
 
@@ -228,4 +226,44 @@ $\frac{1}{p_Y(Y)}=W_Y=\frac{1}{\hat{p}(Y)}\underset{i=1}{\overset{M}{\sum}}w_i$
 
 $\int_{\Omega}f(x)dy=\mathbb{E}[f(Y)W_Y]$
 
-当样本序列
+当样本序列中的样本来自不同的PDF时，需要使用MIS来进行采样，也就是重采样多重重要性采样，其重要性权值为：
+
+$m_i(x)=\frac{p_i(x)}{\sum_{j=1}^Mp_j(x)}$
+
+### GRIS理论
+
+RIS假定了从相互独立的样本中选取样本。GRIS没有这样的前提，候选样本序列可以是来自于不同域$\Omega_i$的相关样本$(X_i)_{i=1}^M$。GRIS从候选样本序列中随机地选择样本$X_s$，并通过一个移动映射(shift mapping)来将样本映射到被积函数$f$的域上，这样就能使生成的样本序列$Y$的PDF接近于归一化的目标PDF $\bar{p}$ 。
+
+简单来说，GRIS通过一个映射$T$，完成了从任意样本域到被积函数域的映射，也就是修正权重表达式为：
+
+$w_i=m_i(T_i(X_i))\hat{p}(T_i(X_i))W_i\cdot|\partial T_i/\partial X_i|$
+
+新选取的样本应当事先完成映射变换，也就是
+
+$Y=T_s(X_s)$
+
+这样就可以沿用以往的算法流程。
+
+从域$\Omega_i$到域$\Omega$的移动映射$T_i$定义为从子集$\mathcal{D}(T_i)\subset\Omega_i$到图像$\mathcal{I}(T_i)\subset\Omega$的双射函数。
+
+那么贡献函数为：
+
+$g_i(x)=c_i(y)f(y_i)|\frac{\partial T_i}{\partial x}|$
+
+其中，$y_i$是对$T_i(x)$的简写，$c_i$是MIS的贡献权重（可以任取，只需要满足归一化），$|\frac{\partial T_i}{\partial x}|$是$x\rightarrow y_i$的雅可比行列式。最后就能得到：
+
+$\underset{i=1}{\overset{M}{\sum}}\int_{\Omega_i}g_i(x)dx=\int_{\Omega}f(x)dx$
+
+对于$x\notin\mathcal{D}(T_i)$，我们定义其$g_i(x)=0$，同时调整MIS贡献权重$c_i$来补偿。
+
+我们假设权重$w_i$遵循以下规则：
+
+$w_i>0\iff X_i\in\mathcal{D}(T_i)\space\&\space\hat{p}(Y_i)>0$
+
+$w_i=0,\quad otherwise$
+
+也就是，$Y$的支撑集满足：
+
+$\textrm{supp}Y=\textrm{supp}\hat{p}\cap\underset{i=1}{\overset{M}{\bigcup}}T_i(\textrm{supp}X_i)$
+
+上式表明$\textrm{supp}Y\subset\textrm{supp}\hat{p}$，也可以假设$\textrm{supp}\hat{p}\subset\textrm{supp}Y$，这样就可以得到两个支撑集相等，也就是双射关系。
