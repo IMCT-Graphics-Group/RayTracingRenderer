@@ -108,4 +108,27 @@ html/vkspec.html#VUID-vkBindBufferMemory-memory-parameter)
 - `VK_OBJECT_TYPE_INSTANCE`告知了Vulkan对象类型（`VkObjectType`）
 - `Invalid VkDeviceMemory Object 0x60000000006`告知了哪个句柄引发了错误
 
-# 7. 
+# 7. Vulkan开发
+### 7.1 Loader
+加载器负责将应用程序映射到 Vulkan Layer 和 Vulkan 驱动程序 (ICD)。
+
+加载器有两种链接方式：直接和间接。
+- 直接链接（编译期）：需要有一个已经构建的Vulkan Loader（静态库或动态库）。
+- 间接链接（运行期）：使用动态符号查找（通过 `dlsym` 和 `dlopen` 等系统调用），应用程序可以初始化自己的调度表。
+
+### 7.2 Layers
+Layers作为共享库，由loader动态加载于loader和应用之间。启用Layer的两个要素是二进制文件位置和需要启用的Layer。要使用的Layer可以由应用程序显式启用，也可以通过告诉加载程序来隐式启用。
+
+Vulkan SDK 包含一个Layer配置文档，该文档非常具体地说明了如何在每个平台上发现和配置Layer。Windows，Linux和macOS上可以使用Vulkan配置器 vkconfig 启用显式层和禁用隐式层。
+
+### 7.3 物理设备信息查询
+Vulkan中可查询的物理设备信息包括：设备属性（只读数据）、可用扩展（[Registry](https://registry.khronos.org/vulkan/#repo-docs)）、可用特性、限制和支持格式。
+
+可用扩展：虽然默认情况下所有这些扩展项目都在 Vulkan 标头中找到，但如果未启用扩展，则使用扩展是未定义的行为。
+
+限制：限制是具体实现所依赖的最小值、最大值和应用程序可能需要注意的其他设备特性。
+
+支持格式：Vulkan 提供了许多具有多个 `VkFormatFeatureFlags` 的 `VkFormat`，每个 `VkFormatFeatureFlags` 都包含不同的 `VkFormatFeatureFlagBits` 的位掩码。
+
+### 7.4 启用扩展
+Vulkan中的扩展有两种：实例扩展和设备扩展。
