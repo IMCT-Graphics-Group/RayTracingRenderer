@@ -1,4 +1,4 @@
-## 1. 什么是Vulkan
+# 1. 什么是Vulkan
 Vulkan是新一代的图形和计算API，它提供了对现代图形硬件的跨平台高效访问。
 
 ### 1.1 核心概念
@@ -18,3 +18,94 @@ Vulkan是新一代的图形和计算API，它提供了对现代图形硬件的�
 Vulkan并不能带来直接的性能提升，暴露给Vulkan和OpenGL ES的硬件是相同的，它们所使用的渲染方法也大致相同。但Vulkan可以降低CPU的负载，间接支持了更高的GPU频率。
 Vulkan最大的优势在于降低渲染逻辑中的CPU负载，这是通过简化API接口以及支持多线程实现的。Vulkan的第二个优势在于降低了应用的内存占用，这是通过帧内资源回收利用实现的，对RAM受限的设备有很大价值。
 Vulkan最大的缺点在于将大量的职责转变到了应用层，包括内存分配、依赖管理、CPU-GPU同步。这是一把双刃剑，在细化控制粒度的同时，增加了风险。Vulkan的另一个巨大的弊端在于其极小的抽象层很容易暴露硬件之间的差异。例如OpenGL ES的依赖完全由驱动把控，所以能假定执行正确的操作；但Vulkan由应用层控制，有些在传统管线中运行良好的渲染通道可能在tile-base渲染中显得过于保守。
+
+# 2. Vulkan可以做什么
+Vulkan实际上是一组工具，可以通过很多方式完成开发任务。
+
+### 2.1 图形
+2D和3D图形是Vulkan API设计上最主要的用途，Vulkan被设计用于开发和构建硬件加速的图形应用。
+
+### 2.2 计算
+由于GPU的天然并行性，因而可利用GPU来执行各种GPGPU计算任务。
+
+### 2.3 光线追踪
+光追是一项可选的渲染技术，跨厂商的光追支持以Vulkan 1.2.162的扩展规范体现。主要由`VK_KHR_ray_tracing_pipeline`、`VK_KHR_ray_query`和`VK_KHR_acceleration_structure`组成。
+
+### 2.4 视频
+在Vulkan 1.2.175规范中有一个关于Vulkan Video的临时规范。Vulkan Video坚持Vulkan的理念，即为应用程序提供对视频处理调度、同步和内存利用的灵活、细粒度的控制。
+
+### 2.5 机器学习
+目前，Vulkan工作组正在研究如何使Vulkan成为展现现代GPU机器学习计算能力的一流API。
+
+# 3. Vulkan规范
+Vulkan 规范（通常称为 Vulkan 规范）是对 Vulkan API 如何工作的官方描述，最终用于决定什么是有效的 Vulkan 用法，什么是无效的。乍一看，Vulkan 规范似乎是一大堆枯燥乏味的文本，但它通常是开发时最有用的材料。
+
+Khronos Group的[Vulkan Spec Registry](https://registry.khronos.org/vulkan/specs/)
+
+# 4. 什么是SPIR-V
+[SPIR-V Guide](https://github.com/KhronosGroup/SPIRV-Guide)
+SPIR-V是图形着色阶段和计算内核之间的二进制中间表示。使用Vulkan时，应用层仍然可以使用高级着色语言（HLSL、GLSL）编写Shader，但当使用`vkCreateShaderModule`时需要传递其SPIR-V二进制表示。
+
+### 4.1 SPIR-V接口和功能
+Vulkan规范中有一整章定义如何使用SPIR-V接口。SPIR-V具有许多其他功能，而不仅仅是用于Vulkan。
+
+### 4.2 SPIR-V编译器
+- glslang：Khronos的参考前端，用于生成GLSL、HLSL和ESSL的SPIR-V。
+- Shaderc：由 Google 托管的用于 Vulkan 着色器编译的工具、库和测试的集合。
+- DXC：DirectXShaderCompiler也支持将HLSL编译为SPIR-V。
+
+### 4.3 生态和工具
+- SPIRV-Tools：Khronos SPIRV-Tools 项目提供了 C 和 C++ API 以及一个命令行界面来与 SPIR-V 模块一起工作。
+- SPIRV-Cross：Khronos SPIRV-Cross 项目是一个实用的工具和库，用于在 SPIR-V 上执行反射并将 SPIR-V 反汇编回所需的高级着色语言。
+- SPIRV-LLVM：Khronos SPIRV-LLVM 项目是一个支持 SPIR-V 的 LLVM 框架。它旨在包含 LLVM 和 SPIR-V 之间的双向转换。它还作为编译 SPIR-V 的 LLVM 前端编译器的基础。
+
+# 5. 开发工具
+### 5.1 Vulkan Layers
+Layer 是增强 Vulkan 系统的可选组件。它们可以在从应用程序到硬件的过程中拦截、评估和修改现有的 Vulkan 功能。层作为库实现，可以使用 Vulkan Configurator 启用和配置。
+
+- Khronos Layers：`VK_LAYER_KHRONOS_validation`是Khronos验证层。这是每个开发人员在调试 Vulkan 应用程序时的第一道防线。该验证层包括了“同步验证”、“GPU辅助验证”、“着色器打印”和“最佳实践警告”。
+- Vulkan SDK layers：除了Khronos Layers，Vulkan SDK还包括一些额外的有用的独立layer，比如`VK_LAYER_LUNARG_api_dump`、`VK_LAYER_LUNARG_gfxreconstruct`等。
+- 第三方layers
+
+### 5.2 Debugging
+- Arm Graphics Analyzer
+- GAPID
+- NVIDIA Nsight
+- PVRCarbon
+- RenderDoc
+- GFXReconstruct
+
+### 5.3 性能分析
+- AMD Radeon GPU Profiler
+- Arm Streamline Performance Analyzer
+- Intel GPA
+- OCAT
+- PVRTune
+- Qualcomm Snapdragon Profiler
+- VKtracer
+
+# 6. Vulkan Validation
+### 6.1 Valid Usage
+VU的官方定义是：为了在应用程序中实现明确定义的运行时行为而必须满足的一组条件。
+Vulkan作为显式API的一个重要优势是，驱动不需要浪费时间检查输入的有效性。
+
+### 6.2 Undefined Behavior
+如果应用层提供了无效输入，则根据规范中的VU，其结果可能是未定义的行为。
+
+### 6.3 Valid Usage ID
+VUID 是为每个有效使用提供的唯一 ID。这提供了一种快速标示规范中有效用法的途径。
+
+### 6.4 Validation Error Message
+```
+Validation Error: [ VUID-vkBindBufferMemory-memory-parameter ] Object 0: handle =
+0x20c8650, type = VK_OBJECT_TYPE_INSTANCE; | MessageID = 0xe9199965 | Invalid
+VkDeviceMemory Object 0x60000000006. The Vulkan spec states: memory must be a valid
+VkDeviceMemory handle (https://registry.khronos.org/vulkan/specs/1.1-extensions/
+html/vkspec.html#VUID-vkBindBufferMemory-memory-parameter)
+```
+- 首先需要注意的是开头的VUID：`VUID-vkBindBufferMemory-memory-parameter`
+- `The Vulkan spec states`是对规范中VUID内容的引用
+- `VK_OBJECT_TYPE_INSTANCE`告知了Vulkan对象类型（`VkObjectType`）
+- `Invalid VkDeviceMemory Object 0x60000000006`告知了哪个句柄引发了错误
+
+# 7. 
