@@ -20,9 +20,9 @@ $a(\mathbf{x}_i\rightarrow\mathbf{y})=\frac{p^*(\mathbf{y})q(\mathbf{y}\rightarr
 
 光线传输模拟的本质其实是计算路径积分：
 
-$I_j=\int_{\Omega(\mathcal{M})}h_j(\bar{x})f(\bar{x})d\mu(\bar{x})=\underset{k=1}{\overset{\infin}{\sum}}\int_{\Omega^k(\mathcal{M})}h_j(\bar{x})f(\bar{x})d\mu(\bar{x})$
+$I_j=\int_{\Omega(\mathcal{M})}h_j(\bar{x})f(\bar{x})d\mu(\bar{x})=\underset{k=1}{\overset{\infty}{\sum}}\int_{\Omega^k(\mathcal{M})}h_j(\bar{x})f(\bar{x})d\mu(\bar{x})$
 
-其中，$I_j$是第$j$个像素的强度，$\Omega^k(\mathcal{M})$是所有光路长度为$k$的路径空间，$\Omega(\mathcal{M})=\bigcup_{k=1}^{\infin}\Omega^k(\mathcal{M})$是全部光路的路径空间，$\bar{x}\in\Omega^k(\mathcal{M})$是从光源到相机的一条完整路径。路径可以表示为场景流形$\mathcal{M}$上的一个向量$\bar{x}=(\mathbf{x}_0,\mathbf{x}_1,\mathbf{x}_2,...,\mathbf{x}_k)$。$f(\bar{x})$是路径上各点反射过程的乘积；$h_j(\bar{x})$是一个滤波函数，仅对第$j$个像素的支撑集非零。
+其中，$I_j$是第$j$个像素的强度，$\Omega^k(\mathcal{M})$是所有光路长度为$k$的路径空间，$\Omega(\mathcal{M})=\bigcup_{k=1}^{\infty}\Omega^k(\mathcal{M})$是全部光路的路径空间，$\bar{x}\in\Omega^k(\mathcal{M})$是从光源到相机的一条完整路径。路径可以表示为场景流形$\mathcal{M}$上的一个向量$\bar{x}=(\mathbf{x}_0,\mathbf{x}_1,\mathbf{x}_2,...,\mathbf{x}_k)$。$f(\bar{x})$是路径上各点反射过程的乘积；$h_j(\bar{x})$是一个滤波函数，仅对第$j$个像素的支撑集非零。
 
 Path tracing将蒙特卡洛积分直接应用在了路径积分上，对于像素$I_j$，通过依概率采样路径$\bar{x}_i\sim p_j(\bar{x}_i)$来计算其蒙特卡洛估计：
 
