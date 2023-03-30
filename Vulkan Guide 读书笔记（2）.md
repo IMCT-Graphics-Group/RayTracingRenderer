@@ -32,8 +32,55 @@ Vulkan中的主要术语：
 - `VkSemaphore`：用于同步CPU端和GPU端执行的指令。用于按顺序同步多个命令缓冲区的提交。
 - `VkFence`：用于同步CPU端和GPU端执行的指令。用于了解某个指令缓冲是否在GPU端被执行完成。
 
-Vulkan的上层工作流
+Vulkan的工作流
 
 1. **引擎初始化阶段**：首先，所有东西都需要初始化。初始化Vulkan是从创建`VkInstance`开始的，它要求传递进一组`VkPhysicalDevice`。如果电脑同时具备一张独立显卡和一张集成显卡，那么它们就分别对应一个`VkPhysicalDevice`。可以通过`VkPhysicalDevice`查询显卡所支持的特性，然后从符合需求的物理显卡创建一个逻辑设备`VkDevice`。有了`VkDevice`，就可以获取它的指令队列`VkQueue`，通过在指令队列中添加指令缓冲即可执行各种指令。和`VkQueue`同时出现的一般还有指令池`VkCommandPool`，用于分配录制指令所使用的指令缓冲`VkCommandBuffer`。另一个需要初始化的是交换链`VkSwapchainKHR`。
 2. **资源初始化**：Vulkan的核心组件都初始化后，就可以开始初始化渲染所需要的各种资源。载入材质后，可以创建一组`VkPipeline`对象用于存储Shader绑定以及材质参数。对于网格模型，需要将顶点数据传递进`VkBuffer`中；贴图纹理则是传递进`VkImage`中，并且需要确保`VkImage`是在“readable” layout中。还需要创建多个`VkRenderPass`对象来执行渲染，比如一个`VkRenderPass`用于主渲染，另一个`VkRenderPass`则用于阴影渲染。在实际引擎中，上述很多操作都是在后台线程中并行执行的，特别是像管线创建这样的昂贵操作。
-3. **渲染循环**：
+3. **渲染循环**：经过初始化，现在可以开始渲染了。首先向`VkSwapchainKHR`请求一张图像用于渲染写入。接着从`VkCommandBufferPool`中分配一块`VkCoomandBuffer`来录入指令（或者重复利用已经执行结束的`VkCommandBuffer`）。然后开始执行renderpass来进行渲染，`VkRenderPass`可以指定渲染写入的图像（之前从`VkSwapchainKHR`中请求的），接着创建循环来给renderpass绑定`VkPipeline`、绑定`VkDescriptorSet`、绑定顶点缓冲，然后执行绘制指令（draw call）。renderpass录制之后，如果没有额外需要渲染的内容，可以结束`VkCommandBuffer`的指令录制并将指令提交给GPU执行。如果最后需要将渲染的图像呈现到屏幕上，则需要通过同步指令（semaphore）等待渲染出图像。
+
+**渲染循环**的流程用伪代码表示为：
+```Cpp
+// Ask the swapchain for the index of the swapchain image we can render onto
+int image_index = request_image(mySwapchain);
+
+// Create a new command buffer
+VkCommandBuffer cmd = allocate_command_buffer();
+
+// Initialize the command buffer
+vkBeginCommandBuffer(cmd, ... );
+
+// Start a new renderpass with the image index from swapchain as target to render onto
+// Each framebuffer refers to a image in the swapchain
+vkCmdBeginRenderPass(cmd, main_render_pass, framebuffers[image_index] );
+
+// Rendering all objects
+for(object in PassObjects){
+
+    // Bind the shaders and configuration used to render the object
+    vkCmdBindPipeline(cmd, object.pipeline);
+    
+    // Bind the vertex and index buffers for rendering the object
+    vkCmdBindVertexBuffers(cmd, object.VertexBuffer,...);
+    vkCmdBindIndexBuffer(cmd, object.IndexBuffer,...);
+
+    // Bind the descriptor sets for the object (shader inputs)
+    vkCmdBindDescriptorSets(cmd, object.textureDescriptorSet);
+    vkCmdBindDescriptorSets(cmd, object.parametersDescriptorSet);
+
+    // Execute drawing
+    vkCmdDraw(cmd,...);
+}
+
+// Finalize the render pass and command buffer
+vkCmdEndRenderPass(cmd);
+vkEndCommandBuffer(cmd);
+
+
+// Submit the command buffer to begin execution on GPU
+vkQueueSubmit(graphicsQueue, cmd, ...);
+
+// Display the image we just rendered on the screen
+// renderSemaphore makes sure the image isn't presented until `cmd` is finished executing
+vkQueuePresent(graphicsQueue, renderSemaphore);
+```
+
