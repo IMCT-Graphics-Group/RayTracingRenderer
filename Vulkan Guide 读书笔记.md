@@ -75,7 +75,7 @@ Layer 是增强 Vulkan 系统的可选组件。它们可以在从应用程序到
 - RenderDoc
 - GFXReconstruct
 
-### 5.3 性能分析
+### 5.3 性能分析工具
 - AMD Radeon GPU Profiler
 - Arm Streamline Performance Analyzer
 - Intel GPA
