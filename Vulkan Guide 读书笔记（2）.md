@@ -115,4 +115,71 @@ vkQueuePresent(graphicsQueue, renderSemaphore);
 
 实际开发中很少使用`VK_PRESENT_MODE_IMMEDIATE_KHR`模式，通常使用MAILBOX模式或者两种FIFO模式之一。
 
-### 2.5 Commands
+### 2.5 指令执行
+与DX11和OpenGL不同，Vulkan中的所有GPU指令都需要通过指令缓冲（command buffer）传递。指令缓冲从指令池（Command Pool）中申请，在队列中执行。
+
+指令执行的一般流程为：
+- 从`VkCommandPool`中分配一块`VkCommandBuffer`
+- 通过`VkCmdXXXXX`函数将指令录制到指令缓冲中
+- 将指令缓冲提交到`VkQueue`中执行
+
+同一块指令缓冲是可以多次使用的，有些案例会在录入一次指令缓冲后，每帧重复提交。但实际应用中一般每帧都需要重新录制指令缓冲。
+
+录制指令缓冲的开销很小，绝大多数工作发生在调用`VkQueueSubmit`时，这时需要检查指令的有效性并转译为真正的GPU指令。
+
+指令缓冲是可以并行录制的，可以在不同的线程中同时向不同的指令缓冲录入指令。但这需要在不同的线程中分别使用`VkCommandPool`和`VkCommandBuffer`，并确保该线程只会使用自己线程的指令池和指令缓冲。最后需要在一个线程中分别提交这些指令缓冲，因为`vkQueueSubmit`并不是线程安全的，同一时间只能有一条线程提交指令。
+
+### 2.6 VkQueue
+队列是GPU的执行端口，每个GPU都有多个队列可获取，可以同时使用这些队列执行不同的指令流。提交到不同队列的指令也可能同时执行，这对于执行一些不需要和主线程同步的后台工作来说非常有用。比如，可以创建一个`VkQueue`专门用于某些后台工作，从而与主渲染任务区分开来。
+
+Vulkan中的所有队列都来自于队列族（Queue Family）。队列族实际上就是队列的“类型”，标示着该队列支持哪些指令。例如，支持图形和显示的队列就可以用于渲染和刷新屏幕。
+
+不同的GPU支持不同的队列族，例如某个GPU可能支持两种队列族，其中一种队列族支持所有的特性并提供了16个队列，而另一种仅支持传输且只提供1个队列。仅支持传输的队列族在Vulkan中比较特殊，常被用于在后台加载各种资源，一般可以独立于渲染流程而完全地异步执行。因此，如果需要在后台线程中加载GPU资源，使用仅支持传输的队列是一个很好的选择。
+
+### 2.7 VkCommandPool
+指令池`VkCommandPool`是从`VkDevice`中创建的，而且在创建时需要指定相应的队列族索引。可以将指令池看作指令缓冲`VkCommandBuffer`的后台分配器，可以从指令池中分配任意多的指令缓冲，但同时只能录制来自一个线程的指令。如果需要多线程同时录制指令，就需要创建多个`VkCommandPool`对象。
+
+指令缓冲通常分配得很少，而且每次都需要重置。最快捷的方式是重置整个指令池，这样就能一起重置所有分配的指令缓冲。也可以直接重置指令缓冲，但如果从指令池中分配了多个指令缓冲，那么重置指令池会更快。
+
+### 2.8 VkCommandBuffer
+所有送往GPU的指令都需要录制到指令缓冲中。所有需要GPU执行的函数都需要等到指令缓冲被提交到GPU时才会执行。
+
+指令缓冲分配后一般会处于就绪状态（Ready），这时可以调用`vkBeginCommandBuffer()`来将指令缓冲切换到录制状态（Recording）。这时便可以将各种`vkCmdXXXXX`函数录制到指令缓冲中。当指令录制完毕，可以调用`vkEndCommandBuffer()`来结束录制并将指令缓冲切换至可执行状态（Executable），这时就可以准备提交到GPU中了。提交指令缓冲是通过`vkQueueSubmit()`实现的，需要指定提交的指令缓冲和提交到的队列。提交后的指令缓冲将变成挂起状态（Pending）。
+
+提交后的指令缓冲仍然处于活跃状态，可能会被GPU使用，所以这时就重置指令缓冲是不安全的。需要确认GPU已经执行完指令缓冲的全部指令之后再重置该指令缓冲。重置指令缓冲通过`vkResetCommandBuffer()`实现。
+
+### 2.9 渲染通道（Renderpass）
+Vulkan中的所有渲染都发生在`VkRenderPass`中。无法在渲染通道外执行渲染指令，但可以执行计算指令。
+
+`VkRenderPass`是对渲染目标、渲染图像状态的一个封装对象。渲染通道（renderpass）是一个仅存在于Vulkan中的概念，可以给驱动提供更多有关渲染目标图像的状态信息。渲染通道会将结果渲染进帧缓冲（Framebuffer）中，帧缓冲链接着渲染目标的图像，当渲染通道开始执行时，帧缓冲会将该图像设置为渲染目标。
+
+渲染通道的一般指令流程为：
+```C++
+vkBeginCommandBuffer(cmd, ...);
+
+vkCmdBeginRenderPass(cmd, ...);
+
+//rendering commands go here
+
+vkCmdEndRenderPass(cmd);
+
+vkEndCommandBuffer(cmd)
+```
+
+启动渲染通道时需要设置目标帧缓冲和clear color。
+
+### 2.10 子通道（Subpasses）
+一个渲染通道包含多个子通道，有点类似于渲染过程的“步进”。子通道对于移动端GPU来说非常有用，它可以给驱动留下很大的优化空间。对于桌面端GPU来说，子通道则相对不那么重要。每个渲染通道最少需要一个子通道。
+
+### 2.11 图像布局（Image Layouts）
+渲染通道的一项非常重要的工作在于，进入和退出渲染通道时修改图像布局。
+
+GPU中的图像未必是我们需要的格式。出于优化考虑，GPU会对图像执行大量的转换和组合，将其变成内部不透明格式。例如，有些GPU会尽可能压缩各类纹理并重新排列像素以利于生成mipmap。Vulkan中不需要我们控制格式转换，但需要控制图像布局，这能使得驱动将图像转变为内部优化的格式。
+
+常用图像布局为：
+- `VK_IMAGE_LAYOUT_UNDEFINED`：不关心图像布局，可以是任意一种布局。
+- `VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL`：优化写入的图像布局。
+- `VK_IMAGE_LAYOUT_PRESENT_SRC_KHR`：可用于屏幕显示的图像布局。
+- `VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL`：优化Shader读入的图像布局。
+
+### 2.12 同步
