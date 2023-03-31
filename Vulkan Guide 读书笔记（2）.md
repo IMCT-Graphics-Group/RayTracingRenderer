@@ -183,3 +183,36 @@ GPU中的图像未必是我们需要的格式。出于优化考虑，GPU会对�
 - `VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL`：优化Shader读入的图像布局。
 
 ### 2.12 同步
+Vulkan为CPU端和GPU端的执行同步提供了显式的同步结构。并且可以控制GPU的执行顺序。所有执行的Vulkan指令都将进入队列，并以未定义的顺序“不间断”地执行。
+
+有时需要确认某个操作是否已经执行完成，虽然队列中的指令通常是顺序执行的，但是多个队列之间的先后顺序是无法保证的。为此，Vulkan提供了`VkFence`和`VkSemaphore`。
+
+- `VkFence`：用于GPU->CPU的通信。许多像`vkQueueSubmit`这样的操作允许传递进一个可选的fence参数，如果传递了fence参数，就可以在CPU端知晓GPU是否执行完该操作（阻塞CPU直到GPU执行完成）。
+- `VkSemaphore`：用于GPU和GPU之间的同步。Sempahore可用于定义GPU指令之间的操作顺序，部分操作允许设置发射信号或是等待信号。如果设置该操作发射信号，则在操作执行完之前都会锁定，直到执行完毕再释放。如果设置该操作等待信号，则该操作将一直等到信号被释放才执行。
+
+Semaphore示例伪代码：
+```C++
+VkSemaphore Task1Semaphore;
+VkSemaphore Task2Semaphore;
+
+VkOperationInfo OpAlphaInfo;
+// Operation Alpha will signal the semaphore 1
+OpAlphaInfo.signalSemaphore = Task1Semaphore;
+
+VkDoSomething(OpAlphaInfo);
+
+VkOperationInfo OpBetaInfo;
+
+// Operation Beta signals semaphore 2, and waits on semaphore 1
+OpBetaInfo.signalSemaphore = Task2Semaphore;
+OpBetaInfo.waitSemaphore = Task1Semaphore;
+
+VkDoSomething(OpBetaInfo);
+
+VkOperationInfo OpGammaInfo;
+//Operation gamma waits on semaphore 2
+OpGammaInfo.waitSemaphore = Task2Semaphore;
+
+VkDoSomething(OpGammaInfo);
+```
+
