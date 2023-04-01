@@ -83,7 +83,7 @@ vkQueueSubmit(graphicsQueue, cmd, ...);
 vkQueuePresent(graphicsQueue, renderSemaphore);
 ```
 
-## 2. 开发
+## 2. 基础渲染
 
 ### 2.1 VkInstance
 `VkInstance`表示Vulkan API的上下文，创建`VkInstance`时可以选择开启校验层（validation layers）、选择需要的扩展（例如`VK_KHR_surface`）以及关联日志。
@@ -233,3 +233,13 @@ Vulkan中的`VkPipeline`是一个复杂的对象，包含GPU渲染所需要的�
 除了各种状态结构，渲染管线还需要一个`VkPipelineLayout`对象。这是一个Vulkan中的对象，需要在管线之外单独创建。
 
 管线布局包含管线中着色器的输入信息，需要在管线布局中配置描述符集。
+
+## 3. 模型渲染
+
+### 3.1 顶点缓冲
+Vulkan中可以分配出对GPU可见的内存，并使shader读取其中的信息。这类内存有两种形式：图像和缓冲。图像通常是2d或3d的数据，比如纹理。缓冲则是GPU可以直接读写的内存块。缓冲有几种不同的类型，顶点缓冲是其中最常见的类型之一。
+
+顶点缓冲允许GPU读取其中的数据，并将数据发送给顶点着色器（vertex shader）。着色器中读取顶点缓冲，需要在管线中设置顶点输入状态，该状态告诉Vulkan如何将缓冲数据解释为顶点数据。
+
+顶点输入布局（vertex input layout）可用于描述顶点数据的结构。
+
