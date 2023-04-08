@@ -326,6 +326,21 @@ Draw Indirect技术是指drawcall不再是从调用中获取参数，而是从GP
 
 整体的思路是将数据尽可能都放进缓冲中，然后就不再需要每次drawcall都绑定一遍。
 
+### 4.3 GPU culling
+GPU剔除一般采用如下流程：
+- 将（场景）大网格拆分为多个Meshlet小网格（64个顶点），生成相应的包围球。
+- 使用task shader和mesh shader来对每个小网格做背面剔除及视锥体剔除。
+- 使用compute shader进行高效的遮挡剔除。
+- 使用draw indirect生成绘制指令。
+
+划分Meshlet是在渲染前预计算的，每遍历64个索引或126个三角形就划分一个Meshlet。每个Meshlet中存储四个数：顶点偏移、顶点数量、三角形偏移、三角形数量。
+
+与传统管线不同，mesh管线的流程一般为：task shader --> mesh generation --> mesh shader --> raster --> pixel shader
+
+task shader和mesh shader使用与compute shader相同的运行模型，只在一些细节上略有调整。task shader输出的内容将作为mesh shader输入的内容。
+
+task shader（DX12中称为amplification shader）可以看作一种过滤器，提交Meshlets可以过一遍task shader来筛选网格。mesh shader在获取到通过了task shader的Meshlets后，执行和顶点着色器差不多的工作。
+
 ## 5.其他系统
 
 ### 5.1 资源系统
@@ -398,3 +413,21 @@ Vulkan中的指令缓冲有分为主缓冲和次要缓冲的系统设计。主�
 
 在过去，物理模拟主要在CPU端运行，这是由于那时的GPU被设计为专门加速图形渲染。但随着GPU的发展，管线阶段逐渐向着通用计算模块转变。使用GPU加速物理计算不但可以获得算力上的提升，还可以减少CPU内存到GPU内存的拷贝操作，这对于整体的性能提升至关重要。
 
+GPU整体的运行模式采用SIMT（单指令多线程），这与CPU端的SIMD很像。但GPU端在单个指令上操作的数据点更多，且GPU上的线程比CPU端更灵活。
+
+## 7. 光线追踪
+
+### 7.0 时域抗锯齿（Temporal Anti-Aliasing）
+
+
+### 7.1 光追阴影
+
+
+## 8. 其他
+
+### 8.1 变速率着色（Variable Rate Shading）
+变速率着色可以在不影响视觉质量的同时，允许开发人员指定单个像素的着色速率。该技术有利于减少某些渲染通道的时间，从而将更多的时间用于其他渲染特性。
+
+不启用VRS的情况下，着色速率为1x1，也就是每个像素都运行一次片元着色器。VSR通常会选用1x1、1x2、2x1和2x2的着色速率，选用更高速率可能会引起问题。1x2和2x1的着色速率意味着每两个像素运行一次片元着色器，运行的结果写入这两个像素中。
+
+具体着色速率的选择一般根据光照pass之后的像素亮度均匀性确定，亮度均匀的区域可以使用更高的着色速率。
