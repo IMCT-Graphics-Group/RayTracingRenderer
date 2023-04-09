@@ -443,7 +443,14 @@ TAA的算法流程为：
 - 未命中（Miss）：光线未命中任何几何原语时触发。
 - 可调用（Callable）：可在已有着色器中被调用的着色器。
 
-Vulkan中创建加速结构需要先将场景转译为`VkAccelerationStructureGeometryKHR`，对其中的每个网格设置几何类型（三角形、AABB或实例）与标记（是否透明等）。
+Vulkan中创建加速结构需要先将场景转译为`VkAccelerationStructureGeometryKHR`，对其中的每个网格设置几何信息。有了网格信息后就可以构建BLAS了，构建BLAS的第一步是检查加速结构所需的内存大小，通过`vkGetAccelerationStructureBuildSizesKHR()`查询；构建加速结构需要提供两个缓冲，一个用于实际的加速结构数据，另一个用于构建（scratch buffer）。
+
+TLAS必须基于已有的BLAS构建，TLAS的构建与BLAS相似，但TLAS是由BLAS的实例组成的。
+
+构建完加速结构后，需要实现shader绑定表来创建光追管线。
+
+### 7.2 光追阴影
+
 
 ## 8. 其他
 
