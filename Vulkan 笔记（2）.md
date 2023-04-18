@@ -497,6 +497,15 @@ SVGF的算法流程为：
 - 使用一阶矩和二阶矩进行方差估计。
 - 使用5个pass做小波滤波。每个pass使用5x5的滤波器来降低噪声（空间）。
 
+### 7.5 混合光追管线
+本节特指延迟光追管线（deferred ray tracing）。
+
+1. 首先使用光栅化方法渲染G-buffer，然后使用compute shader计算直接光照和后处理效果。
+2. 使用compute shader或者ray tracing计算直接阴影和AO。
+3. 使用ray tracing计算GI、反射、透明和半透明。
+
+上述步骤中使用ray tracing的部分几乎都需要对结果进行降噪（denoising）。
+
 ## 8. 其他
 
 ### 8.1 变速率着色（Variable Rate Shading）
