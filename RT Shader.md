@@ -56,3 +56,21 @@ Unity提供了`SystemInfo.supportsRayTracing`属性用于检查当前平台是�
 
 **Ray generation shader**：通过调用`TraceRay()`生成任意数量的光线。调用时需要同时指定一个用户自定义的ray payload结构作为参数。也可以在该着色器中调用`CallShader()`来调用一些callable shader。
 
+#### 4.1 RayTracing Shader中的Mesh采样
+传统的光栅化管线中，顶点着色器（vertex shader）通过专门的顶点语义（POSITION，TEXCOORD0等）定义输入的顶点信息，GPU将顶点输入流转换为顶点属性存入GPU的寄存器中。整个过程都是不透明的，由硬件厂商实现。但对于光追来说，我们需要手动从Mesh中读取顶点信息并解码顶点属性。
+
+光线和三角形的求交由硬件加速结构完成，根据交点的位置不同，`any hit shader`和`closest hit shader`会被调用。HLSL提供的`PrimitiveIndex()`可用于获取当前三角形在BLAS中的编号，使用该编号可以读取相应三角形的三个顶点的数据，并根据交点位置对顶点属性进行插值。
+
+需要注意的是：
+- Mesh采样只可用于材质shader中的`any hit shader`和`closest hit shader`。
+- 光栅化过程和光追过程的Mesh采样是一致的，不存在额外的数据拷贝。
+
+**Unity中的参数访问**
+在Unity内的HLSL中，可以通过引入`UnityRayTracingMeshUtils.cginc`来获取顶点流数组和Mesh的索引缓冲及属性缓冲数据。其中有一些帮助函数用于方便地获取顶点数据：
+- `uint3 UnityRayTracingFetchTriangleIndices(uint primitiveIndex)`：读取指定三角形的三个顶点的索引。
+- `floatN UnityRayTracingFetchVertexAttributeN(uint vertexIndex, uint attributeType)`：其中N=2,3,4，读取指定顶点的顶点属性。需要注意的是，如果实际数据的维数小于函数签名中的维数（N），则多出来的维度会自动补零。
+- `bool UnityRayTracingHasVertexAttribute(uint attributeType)`：检查指定的顶点属性是否存在。
+
+**顶点数据插值**
+调用`any hit shader`或`closest hit shader`后，硬件固定函数会将相应的ray payload信息和交点的重心坐标值作为着色器的输入数据。`float2 barycenterics`的两个值分别对应v1和v2的权重，因此三个顶点的权重系数应为：
+`float3 barycentricCoords = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);`
